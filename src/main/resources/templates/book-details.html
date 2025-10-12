@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${book.title} + ' - Library Management System'">Book Details</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-book"></i> Library Management System
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/search">Search</a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item" th:if="${#authentication.isAuthenticated()}">
+                        <a class="nav-link" href="/loans/my-loans">
+                            <i class="fas fa-book-reader"></i> My Loans
+                        </a>
+                    </li>
+                    <li class="nav-item" th:if="${#authentication.isAuthenticated()}">
+                        <span class="navbar-text me-3">
+                            Welcome, <span th:text="${#authentication.name}">User</span>!
+                        </span>
+                    </li>
+                    <li class="nav-item" th:if="${#authentication.isAuthenticated()}">
+                        <a class="nav-link" href="/auth/logout">
+                            <i class="fas fa-sign-out-alt"></i> Logout
+                        </a>
+                    </li>
+                    <li class="nav-item" th:unless="${#authentication.isAuthenticated()}">
+                        <a class="nav-link" href="/auth/login">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mt-4">
+        <!-- Flash Messages -->
+        <div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle"></i> <span th:text="${success}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+        
+        <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle"></i> <span th:text="${error}"></span>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+
+        <!-- Breadcrumb -->
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/">Home</a></li>
+                <li class="breadcrumb-item active" th:text="${book.title}">Book Title</li>
+            </ol>
+        </nav>
+
+        <!-- Book Details -->
+        <div class="row">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <h1 class="card-title" th:text="${book.title}">Book Title</h1>
+                            <span class="badge fs-6" 
+                                  th:classappend="${book.status.name() == 'AVAILABLE'} ? 'bg-success' : 'bg-warning'"
+                                  th:text="${book.status.name()}"></span>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-sm-3"><strong>Author:</strong></div>
+                            <div class="col-sm-9" th:text="${book.author}">Author Name</div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-sm-3"><strong>ISBN:</strong></div>
+                            <div class="col-sm-9" th:text="${book.isbn}">ISBN</div>
+                        </div>
+                        
+                        <div class="row" th:if="${book.publisher}">
+                            <div class="col-sm-3"><strong>Publisher:</strong></div>
+                            <div class="col-sm-9" th:text="${book.publisher}">Publisher</div>
+                        </div>
+                        
+                        <div class="row" th:if="${book.publicationDate}">
+                            <div class="col-sm-3"><strong>Publication Date:</strong></div>
+                            <div class="col-sm-9" th:text="${#temporals.format(book.publicationDate, 'MMMM dd, yyyy')}">Publication Date</div>
+                        </div>
+                        
+                        <div class="row" th:if="${book.description}">
+                            <div class="col-sm-3"><strong>Description:</strong></div>
+                            <div class="col-sm-9" th:text="${book.description}">Description</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body text-center">
+                        <h5 class="card-title">Actions</h5>
+                        
+                        <div th:if="${#authentication.isAuthenticated()}">
+                            <div th:if="${isAvailable}">
+                                <form th:action="@{/loans/borrow}" method="post" class="mb-3">
+                                    <input type="hidden" name="bookId" th:value="${book.id}">
+                                    <button type="submit" class="btn btn-success btn-lg w-100">
+                                        <i class="fas fa-book-reader"></i> Borrow Book
+                                    </button>
+                                </form>
+                            </div>
+                            
+                            <div th:unless="${isAvailable}">
+                                <button class="btn btn-secondary btn-lg w-100" disabled>
+                                    <i class="fas fa-times"></i> Not Available
+                                </button>
+                                <small class="text-muted mt-2 d-block">
+                                    This book is currently borrowed or reserved.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div th:unless="${#authentication.isAuthenticated()}">
+                            <p class="text-muted">Please login to borrow books.</p>
+                            <a href="/auth/login" class="btn btn-primary">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                        </div>
+                        
+                        <hr>
+                        
+                        <a href="/" class="btn btn-outline-primary">
+                            <i class="fas fa-arrow-left"></i> Back to Home
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-light mt-5 py-4">
+        <div class="container text-center">
+            <p class="text-muted mb-0">&copy; 2024 Library Management System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

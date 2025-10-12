@@ -1,0 +1,22 @@
+{
+    "folders": [
+        {
+            "path": "."
+        }
+    ],
+    "settings": {
+        "java.configuration.updateBuildConfiguration": "automatic",
+        "java.compile.nullAnalysis.mode": "automatic",
+        "spring-boot.ls.java.home": "/usr/local/openjdk-17"
+    },
+    "extensions": {
+        "recommendations": [
+            "vscjava.vscode-java-pack",
+            "vscjava.vscode-spring-boot-dashboard",
+            "vscjava.vscode-spring-initializr",
+            "redhat.java",
+            "vscjava.vscode-maven",
+            "ms-vscode.vscode-json"
+        ]
+    }
+}
