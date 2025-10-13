@@ -29,4 +29,11 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
     
     @Query("SELECT COUNT(l) FROM Loan l WHERE l.user = :user AND l.status = 'ACTIVE'")
     long countActiveLoansByUser(@Param("user") User user);
+
+    // Eager-load associated Book to avoid LazyInitialization when open-in-view=false
+    @Query("SELECT l FROM Loan l JOIN FETCH l.book WHERE l.user = :user")
+    List<Loan> findByUserFetchBook(@Param("user") User user);
+
+    @Query("SELECT l FROM Loan l JOIN FETCH l.book WHERE l.user = :user AND l.status = :status")
+    List<Loan> findByUserAndStatusFetchBook(@Param("user") User user, @Param("status") LoanStatus status);
 }

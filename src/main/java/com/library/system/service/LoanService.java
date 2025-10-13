@@ -35,11 +35,11 @@ public class LoanService {
     }
     
     public List<Loan> getLoansByUser(User user) {
-        return loanRepository.findByUser(user);
+        return loanRepository.findByUserFetchBook(user);
     }
     
     public List<Loan> getActiveLoansByUser(User user) {
-        return loanRepository.findByUserAndStatus(user, LoanStatus.ACTIVE);
+        return loanRepository.findByUserAndStatusFetchBook(user, LoanStatus.ACTIVE);
     }
     
     public Loan borrowBook(Long userId, Long bookId) {
