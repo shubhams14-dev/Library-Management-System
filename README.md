@@ -32,6 +32,8 @@ A comprehensive Library Management System built with Spring Boot, featuring book
 - **CI/CD**: GitHub Actions
 - **Deployment**: Render.com
 - **Development**: VS Code Dev Container
+- **Testing**: JUnit 5, Mockito
+- **Monitoring**: Spring Boot Actuator
 
 ## Quick Start
 
@@ -210,6 +212,71 @@ src/
 - Passwords are encrypted with BCrypt
 - CSRF protection is enabled
 - Role-based access control implemented
+
+## Deployment
+
+### Docker Deployment
+
+#### Local Development
+```bash
+# Build and run with Docker Compose
+docker-compose up --build
+
+# Access the application at http://localhost:8080
+```
+
+#### Production Deployment
+```bash
+# Build the Docker image
+docker build -t library-management-system .
+
+# Run the container
+docker run -p 8080:8080 -v library-data:/app/data library-management-system
+
+# Or use production Docker Compose
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+### Render Deployment
+
+#### Option 1: Using render.yaml
+1. Push the `render.yaml` file to your repository
+2. Connect your GitHub repository to Render
+3. Render will automatically detect and deploy using the configuration
+
+#### Option 2: Manual Configuration
+1. Create a new Web Service in Render
+2. Connect your GitHub repository
+3. Configure:
+   - **Build Command:** `./build.sh`
+   - **Start Command:** `java -jar target/library-management-system-0.0.1-SNAPSHOT.jar`
+   - **Environment:** `SPRING_PROFILES_ACTIVE=production`
+   - **Health Check Path:** `/actuator/health`
+
+### CI/CD Pipeline
+
+The project includes a comprehensive GitHub Actions CI/CD pipeline:
+
+- **Automated Testing:** Runs on every push and PR
+- **Docker Build:** Multi-architecture builds (AMD64, ARM64)
+- **Security Scanning:** Trivy vulnerability scanning
+- **Container Registry:** Automatic push to GitHub Container Registry
+
+### Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `SPRING_PROFILES_ACTIVE` | Spring profile | `production` |
+| `SPRING_DATASOURCE_URL` | Database URL | `jdbc:sqlite:/app/data/library.db` |
+| `JAVA_OPTS` | JVM options | `-Xmx512m -Xms256m` |
+
+### Health Monitoring
+
+- **Health Check:** `/actuator/health`
+- **Application Info:** `/actuator/info`
+- **Metrics:** `/actuator/metrics`
+
+For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Future Enhancements
 
