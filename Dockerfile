@@ -1,7 +1,7 @@
 # Multi-stage Dockerfile for Library Management System
 
 # Stage 1: Build stage
-FROM maven:3.9.4-openjdk-17-slim AS builder
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 # Set working directory
 WORKDIR /app
