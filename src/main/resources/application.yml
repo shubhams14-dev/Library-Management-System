@@ -3,8 +3,10 @@ spring:
     name: library-management-system
   
   datasource:
-    url: jdbc:sqlite:library.db
+    url: jdbc:sqlite:library.db?busy_timeout=5000&journal_mode=WAL&foreign_keys=on
     driver-class-name: org.sqlite.JDBC
+    hikari:
+      maximum-pool-size: 1
     
   jpa:
     hibernate:
@@ -17,9 +19,13 @@ spring:
         hbm2ddl:
           create_namespaces: false
         jdbc:
-          batch_size: 20
+          batch_size: 0
+          use_get_generated_keys: false
         order_inserts: true
         order_updates: true
+
+  # Avoid long-lived read transactions that can hold SQLite locks
+  open-in-view: false
         
   security:
     user:

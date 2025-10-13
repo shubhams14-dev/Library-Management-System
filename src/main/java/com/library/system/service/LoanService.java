@@ -45,39 +45,57 @@ public class LoanService {
     public Loan borrowBook(Long userId, Long bookId) {
         User user = userService.getUserById(userId)
             .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
-        
+
         Book book = bookService.getBookById(bookId)
             .orElseThrow(() -> new RuntimeException("Book not found with id: " + bookId));
-        
-        // Check if user already has this book borrowed
-        Optional<Loan> existingLoan = loanRepository.findByUserAndBookAndStatus(user, book, LoanStatus.ACTIVE);
-        if (existingLoan.isPresent()) {
-            throw new RuntimeException("User already has this book borrowed");
+
+        // optimistic retry for SQLITE_BUSY (WAL snapshot conflicts)
+        int attempts = 0;
+        RuntimeException lastException = null;
+        while (attempts < 3) {
+            try {
+                // Check if user already has this book borrowed
+                Optional<Loan> existingLoan = loanRepository.findByUserAndBookAndStatus(user, book, LoanStatus.ACTIVE);
+                if (existingLoan.isPresent()) {
+                    throw new RuntimeException("User already has this book borrowed");
+                }
+
+                // Check if book is available
+                if (book.getStatus() != BookStatus.AVAILABLE) {
+                    throw new RuntimeException("Book is not available for borrowing");
+                }
+
+                // Check user's loan limit
+                long activeLoanCount = loanRepository.countActiveLoansByUser(user);
+                if (activeLoanCount >= MAX_LOANS_PER_USER) {
+                    throw new RuntimeException("User has reached maximum loan limit");
+                }
+
+                // Create loan
+                LocalDate borrowDate = LocalDate.now();
+                LocalDate dueDate = borrowDate.plusDays(LOAN_PERIOD_DAYS);
+
+                Loan loan = new Loan(user, book, borrowDate, dueDate);
+                loan = loanRepository.save(loan);
+
+                // Update book status
+                book.setStatus(BookStatus.BORROWED);
+                bookService.saveBook(book);
+
+                return loan;
+            } catch (RuntimeException ex) {
+                lastException = ex;
+                // If this is a transient SQLITE_BUSY/SNAPSHOT, backoff and retry
+                String msg = ex.getMessage() != null ? ex.getMessage() : "";
+                if (msg.contains("SQLITE_BUSY") || msg.contains("SNAPSHOT") || msg.contains("database is locked")) {
+                    try { Thread.sleep(200L * (attempts + 1)); } catch (InterruptedException ignored) {}
+                    attempts++;
+                } else {
+                    throw ex;
+                }
+            }
         }
-        
-        // Check if book is available
-        if (book.getStatus() != BookStatus.AVAILABLE) {
-            throw new RuntimeException("Book is not available for borrowing");
-        }
-        
-        // Check user's loan limit
-        long activeLoanCount = loanRepository.countActiveLoansByUser(user);
-        if (activeLoanCount >= MAX_LOANS_PER_USER) {
-            throw new RuntimeException("User has reached maximum loan limit");
-        }
-        
-        // Create loan
-        LocalDate borrowDate = LocalDate.now();
-        LocalDate dueDate = borrowDate.plusDays(LOAN_PERIOD_DAYS);
-        
-        Loan loan = new Loan(user, book, borrowDate, dueDate);
-        loan = loanRepository.save(loan);
-        
-        // Update book status
-        book.setStatus(BookStatus.BORROWED);
-        bookService.saveBook(book);
-        
-        return loan;
+        throw lastException != null ? lastException : new RuntimeException("Borrow failed due to database contention");
     }
     
     public Loan returnBook(Long loanId) {
