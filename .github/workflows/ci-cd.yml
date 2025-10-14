@@ -8,8 +8,8 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # Use tolower() to ensure the image name is always lowercase
-  IMAGE_NAME: ${{ github.repository | tolower }}
+  # Correct syntax for the tolower function
+  IMAGE_NAME: ${{ tolower(github.repository) }}
 
 jobs:
   test:
@@ -145,3 +145,4 @@ jobs:
       uses: github/codeql-action/upload-sarif@v2
       with:
         sarif_file: 'trivy-results.sarif'
+
