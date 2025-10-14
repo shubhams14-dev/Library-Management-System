@@ -297,9 +297,7 @@ For detailed deployment instructions, see [DEPLOYMENT.md](DEPLOYMENT.md).
 5. Ensure all tests pass
 6. Submit a pull request
 
-## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Support
 
