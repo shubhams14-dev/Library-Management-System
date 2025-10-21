@@ -123,50 +123,62 @@
         </div>
 
         <!-- Books Section -->
-        <div class="row">
-            <div class="col-12">
-                <h2 class="mb-4">
-                    <i class="fas fa-books"></i> 
-                    <span th:if="${searchTerm}">Search Results for "<span th:text="${searchTerm}"></span>"</span>
-                    <span th:unless="${searchTerm}">Available Books</span>
-                </h2>
+        <div th:if="${searchTerm != null}">
+            <div class="row">
+                <div class="col-12">
+                    <h2 class="mb-4">
+                        <i class="fas fa-books"></i>
+                        Search Results for "<span th:text="${searchTerm}"></span>"
+                    </h2>
+                </div>
             </div>
-        </div>
 
-        <div class="row" th:if="${books != null and !books.empty}">
-            <div class="col-md-6 col-lg-4 mb-4" th:each="book : ${books}">
-                <div class="card book-card h-100">
-                    <div class="card-body position-relative">
-                        <span class="badge book-status" 
-                              th:classappend="${book.status.name() == 'AVAILABLE'} ? 'bg-success' : 'bg-warning'"
-                              th:text="${book.status.name()}"></span>
-                        
-                        <h5 class="card-title" th:text="${book.title}">Book Title</h5>
-                        <p class="card-text">
-                            <strong>Author:</strong> <span th:text="${book.author}">Author Name</span><br>
-                            <strong>ISBN:</strong> <span th:text="${book.isbn}">ISBN</span><br>
-                            <span th:if="${book.publisher}">
-                                <strong>Publisher:</strong> <span th:text="${book.publisher}">Publisher</span><br>
-                            </span>
-                        </p>
-                        
-                        <div class="mt-auto">
-                            <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-primary">
-                                <i class="fas fa-eye"></i> View Details
-                            </a>
+            <div class="row" th:if="${books != null and !books.empty}">
+                <div class="col-md-6 col-lg-4 mb-4" th:each="book : ${books}">
+                    <div class="card book-card h-100">
+                        <div class="card-body position-relative">
+                            <span class="badge book-status"
+                                  th:classappend="${book.status.name() == 'AVAILABLE'} ? 'bg-success' : 'bg-warning'"
+                                  th:text="${book.status.name()}"></span>
+
+                            <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                            <p class="card-text">
+                                <strong>Author:</strong> <span th:text="${book.author}">Author Name</span><br>
+                                <strong>ISBN:</strong> <span th:text="${book.isbn}">ISBN</span><br>
+                                <span th:if="${book.publisher}">
+                                    <strong>Publisher:</strong> <span th:text="${book.publisher}">Publisher</span><br>
+                                </span>
+                            </p>
+
+                            <div class="mt-auto">
+                                <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-primary">
+                                    <i class="fas fa-eye"></i> View Details
+                                </a>
+                            </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" th:if="${books == null or books.empty}">
+                <div class="col-12">
+                    <div class="alert alert-info text-center">
+                        <i class="fas fa-info-circle fa-2x mb-3"></i>
+                        <h4>No books found</h4>
+                        <p>No books match your search criteria. Try different keywords.</p>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div class="row" th:if="${books == null or books.empty}">
+        <!-- Welcome message when no search has been performed -->
+        <div th:unless="${searchTerm != null}" class="row">
             <div class="col-12">
-                <div class="alert alert-info text-center">
-                    <i class="fas fa-info-circle fa-2x mb-3"></i>
-                    <h4>No books found</h4>
-                    <p th:if="${searchTerm}">No books match your search criteria. Try different keywords.</p>
-                    <p th:unless="${searchTerm}">No books are currently available in the library.</p>
+                <div class="text-center py-5">
+                    <i class="fas fa-search fa-4x text-muted mb-4"></i>
+                    <h3>Welcome to the Library</h3>
+                    <p class="lead text-muted">Use the search box above to find books by title, author, or ISBN.</p>
+                    <p class="text-muted">You can also use the <a href="/search">Search</a> or <a href="/advanced-search">Advanced Search</a> pages for more filtering options.</p>
                 </div>
             </div>
         </div>
