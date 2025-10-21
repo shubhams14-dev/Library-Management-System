@@ -19,9 +19,12 @@ public class LoanService {
     
     @Autowired
     private BookService bookService;
-    
+
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ReservationService reservationService;
     
     private static final int LOAN_PERIOD_DAYS = 14; // 2 weeks
     private static final int MAX_LOANS_PER_USER = 5;
@@ -101,44 +104,61 @@ public class LoanService {
     public Loan returnBook(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
             .orElseThrow(() -> new RuntimeException("Loan not found with id: " + loanId));
-        
-        if (loan.getStatus() != LoanStatus.ACTIVE) {
+
+        if (loan.getStatus() != LoanStatus.ACTIVE && loan.getStatus() != LoanStatus.EXTENDED) {
             throw new RuntimeException("Loan is not active");
         }
-        
+
         // Update loan
         loan.setReturnDate(LocalDate.now());
         loan.setStatus(LoanStatus.RETURNED);
         loan.setUpdatedAt(java.time.LocalDateTime.now());
         loan = loanRepository.save(loan);
-        
-        // Update book status
+
+        // Update book status and handle reservations
         Book book = loan.getBook();
-        book.setStatus(BookStatus.AVAILABLE);
+
+        // Check if there are pending reservations
+        if (reservationService.hasActiveReservations(book)) {
+            // Promote the first person in queue to READY_FOR_PICKUP
+            reservationService.promoteQueue(book);
+            // Book stays AVAILABLE but first person has 24 hours to pick it up
+            book.setStatus(BookStatus.AVAILABLE);
+        } else {
+            // No reservations, book is simply available
+            book.setStatus(BookStatus.AVAILABLE);
+        }
+
         bookService.saveBook(book);
-        
+
         return loan;
     }
     
     public Loan extendLoan(Long loanId) {
         Loan loan = loanRepository.findById(loanId)
             .orElseThrow(() -> new RuntimeException("Loan not found with id: " + loanId));
-        
-        if (loan.getStatus() != LoanStatus.ACTIVE) {
+
+        if (loan.getStatus() != LoanStatus.ACTIVE && loan.getStatus() != LoanStatus.EXTENDED) {
             throw new RuntimeException("Loan is not active");
         }
-        
+
         // Check if loan is overdue
         if (loan.getDueDate().isBefore(LocalDate.now())) {
             throw new RuntimeException("Cannot extend overdue loan");
         }
-        
+
+        // Check if book has reservations - if yes, cannot extend
+        Book book = loan.getBook();
+        if (reservationService.hasActiveReservations(book)) {
+            throw new RuntimeException("Cannot extend loan - book has active reservations");
+        }
+
         // Extend loan by another period
         LocalDate newDueDate = loan.getDueDate().plusDays(LOAN_PERIOD_DAYS);
         loan.setDueDate(newDueDate);
         loan.setStatus(LoanStatus.EXTENDED);
         loan.setUpdatedAt(java.time.LocalDateTime.now());
-        
+
         return loanRepository.save(loan);
     }
     

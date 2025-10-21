@@ -158,6 +158,78 @@
             </div>
         </div>
 
+        <!-- Active Reservations -->
+        <div class="row mb-5">
+            <div class="col-12">
+                <h3 class="mb-3">My Reservations</h3>
+
+                <div th:if="${activeReservations != null and !activeReservations.empty}">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Book</th>
+                                    <th>Author</th>
+                                    <th>Reserved On</th>
+                                    <th>Queue Position</th>
+                                    <th>Status</th>
+                                    <th>Pickup Deadline</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr th:each="reservation : ${activeReservations}">
+                                    <td>
+                                        <a th:href="@{/books/{id}(id=${reservation.book.id})}"
+                                           th:text="${reservation.book.title}" class="text-decoration-none">
+                                            Book Title
+                                        </a>
+                                    </td>
+                                    <td th:text="${reservation.book.author}">Author</td>
+                                    <td th:text="${#temporals.format(reservation.createdAt, 'MMM dd, yyyy HH:mm')}">Reserved Date</td>
+                                    <td>
+                                        <span th:if="${reservation.status.name() == 'PENDING'}" class="badge bg-info">
+                                            #<span th:text="${reservation.queuePosition}">1</span> in queue
+                                        </span>
+                                        <span th:if="${reservation.status.name() == 'READY_FOR_PICKUP'}" class="badge bg-success">
+                                            Ready for pickup!
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge"
+                                              th:classappend="${reservation.status.name() == 'PENDING'} ? 'bg-warning' :
+                                                             (${reservation.status.name() == 'READY_FOR_PICKUP'} ? 'bg-success' : 'bg-secondary')"
+                                              th:text="${reservation.status.name()}">Status</span>
+                                    </td>
+                                    <td>
+                                        <span th:if="${reservation.expiresAt != null}">
+                                            <span th:text="${#temporals.format(reservation.expiresAt, 'MMM dd, yyyy HH:mm')}">Expires At</span>
+                                            <span th:if="${reservation.expiresAt.isBefore(T(java.time.LocalDateTime).now())}"
+                                                  class="badge bg-danger ms-2">Expired</span>
+                                        </span>
+                                        <span th:unless="${reservation.expiresAt != null}">-</span>
+                                    </td>
+                                    <td>
+                                        <form th:action="@{/reservations/cancel/{id}(id=${reservation.id})}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-times"></i> Cancel
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div th:if="${activeReservations == null or activeReservations.empty}">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> You don't have any active reservations.
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Loan History -->
         <div class="row">
             <div class="col-12">

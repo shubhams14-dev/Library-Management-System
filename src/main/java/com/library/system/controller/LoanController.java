@@ -1,8 +1,10 @@
 package com.library.system.controller;
 
 import com.library.system.domain.Loan;
+import com.library.system.domain.Reservation;
 import com.library.system.domain.User;
 import com.library.system.service.LoanService;
+import com.library.system.service.ReservationService;
 import com.library.system.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -20,25 +22,32 @@ public class LoanController {
     
     @Autowired
     private LoanService loanService;
-    
+
     @Autowired
     private UserService userService;
+
+    @Autowired
+    private ReservationService reservationService;
     
     @GetMapping("/my-loans")
     public String myLoans(Model model) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         String username = auth.getName();
-        
+
         User user = userService.getUserByUsername(username)
             .orElseThrow(() -> new RuntimeException("User not found"));
-        
+
         List<Loan> activeLoans = loanService.getActiveLoansByUser(user);
         List<Loan> allLoans = loanService.getLoansByUser(user);
-        
+
+        // Get user's active reservations
+        List<Reservation> activeReservations = reservationService.getUserReservations(user);
+
         model.addAttribute("activeLoans", activeLoans);
         model.addAttribute("allLoans", allLoans);
+        model.addAttribute("activeReservations", activeReservations);
         model.addAttribute("user", user);
-        
+
         return "my-loans";
     }
     

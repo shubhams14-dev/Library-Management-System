@@ -129,6 +129,7 @@
                         <h5 class="card-title">Actions</h5>
                         
                         <div th:if="${user != null}">
+                            <!-- Book is Available - Show Borrow Button -->
                             <div th:if="${isAvailable}">
                                 <form th:action="@{/loans/borrow}" method="post" class="mb-3">
                                     <input type="hidden" name="bookId" th:value="${book.id}">
@@ -137,14 +138,46 @@
                                     </button>
                                 </form>
                             </div>
-                            
+
+                            <!-- Book is Borrowed -->
                             <div th:unless="${isAvailable}">
-                                <button class="btn btn-secondary btn-lg w-100" disabled>
-                                    <i class="fas fa-times"></i> Not Available
-                                </button>
-                                <small class="text-muted mt-2 d-block">
-                                    This book is currently borrowed or reserved.
-                                </small>
+                                <!-- Show Reserve Button if user can reserve -->
+                                <div th:if="${canReserve}">
+                                    <button class="btn btn-secondary btn-lg w-100 mb-2" disabled>
+                                        <i class="fas fa-times"></i> Currently Borrowed
+                                    </button>
+                                    <form th:action="@{/reservations/reserve/{bookId}(bookId=${book.id})}" method="post" class="mb-3">
+                                        <button type="submit" class="btn btn-primary btn-lg w-100">
+                                            <i class="fas fa-bookmark"></i> Reserve Book
+                                        </button>
+                                    </form>
+                                    <small class="text-muted d-block">
+                                        Join the waitlist to borrow this book when it becomes available.
+                                    </small>
+                                </div>
+
+                                <!-- Show message if user already has reservation -->
+                                <div th:if="${hasReservation}">
+                                    <button class="btn btn-secondary btn-lg w-100 mb-2" disabled>
+                                        <i class="fas fa-times"></i> Currently Borrowed
+                                    </button>
+                                    <button class="btn btn-info btn-lg w-100 mb-2" disabled>
+                                        <i class="fas fa-check"></i> Already Reserved
+                                    </button>
+                                    <small class="text-muted d-block">
+                                        You already have an active reservation for this book. Check My Loans for details.
+                                    </small>
+                                </div>
+
+                                <!-- Show message if user is the borrower or cannot reserve -->
+                                <div th:if="${!canReserve && !hasReservation}">
+                                    <button class="btn btn-secondary btn-lg w-100" disabled>
+                                        <i class="fas fa-times"></i> Not Available
+                                    </button>
+                                    <small class="text-muted mt-2 d-block">
+                                        This book is currently borrowed.
+                                    </small>
+                                </div>
                             </div>
                         </div>
                         

@@ -25,21 +25,30 @@ public class Reservation {
     
     @Enumerated(EnumType.STRING)
     private ReservationStatus status = ReservationStatus.PENDING;
-    
+
+    @Column(name = "queue_position")
+    private Integer queuePosition;
+
     private LocalDateTime createdAt;
-    
+
     private LocalDateTime notifiedAt;
-    
+
     private LocalDateTime expiresAt;
-    
+
     // Constructors
     public Reservation() {}
-    
+
     public Reservation(User user, Book book) {
         this.user = user;
         this.book = book;
         this.createdAt = LocalDateTime.now();
-        this.expiresAt = LocalDateTime.now().plusDays(7); // 7 days to pickup
+    }
+
+    public Reservation(User user, Book book, Integer queuePosition) {
+        this.user = user;
+        this.book = book;
+        this.queuePosition = queuePosition;
+        this.createdAt = LocalDateTime.now();
     }
     
     // Getters and Setters
@@ -97,5 +106,13 @@ public class Reservation {
     
     public void setExpiresAt(LocalDateTime expiresAt) {
         this.expiresAt = expiresAt;
+    }
+
+    public Integer getQueuePosition() {
+        return queuePosition;
+    }
+
+    public void setQueuePosition(Integer queuePosition) {
+        this.queuePosition = queuePosition;
     }
 }
