@@ -1,6 +1,7 @@
 package com.library.system.controller;
 
 import com.library.system.domain.Book;
+import com.library.system.domain.BookStatus;
 import com.library.system.domain.User;
 import com.library.system.service.BookService;
 import com.library.system.service.UserService;
@@ -52,14 +53,57 @@ public class HomeController {
         } else {
             books = bookService.getAllBooks();
         }
-        
+
         // Get current user if authenticated
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
             userService.getUserByUsername(authentication.getName()).ifPresent(user -> model.addAttribute("user", user));
         }
-        
+
         model.addAttribute("books", books);
         return "search";
+    }
+
+    @GetMapping("/advanced-search")
+    public String advancedSearch(@RequestParam(required = false) String title,
+                                  @RequestParam(required = false) String author,
+                                  @RequestParam(required = false) String isbn,
+                                  @RequestParam(required = false) String publisher,
+                                  @RequestParam(required = false) String status,
+                                  @RequestParam(required = false) Integer fromYear,
+                                  @RequestParam(required = false) Integer toYear,
+                                  Model model) {
+        // Get current user if authenticated
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
+            userService.getUserByUsername(authentication.getName()).ifPresent(user -> model.addAttribute("user", user));
+        }
+
+        // Prepare search parameters
+        String titleParam = (title != null && !title.trim().isEmpty()) ? title.trim() : null;
+        String authorParam = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
+        String isbnParam = (isbn != null && !isbn.trim().isEmpty()) ? isbn.trim() : null;
+        String publisherParam = (publisher != null && !publisher.trim().isEmpty()) ? publisher.trim() : null;
+        BookStatus statusParam = (status != null && !status.trim().isEmpty()) ? BookStatus.valueOf(status) : null;
+
+        // If at least one search parameter is provided, perform search
+        if (titleParam != null || authorParam != null || isbnParam != null ||
+            publisherParam != null || statusParam != null || fromYear != null || toYear != null) {
+            List<Book> books = bookService.advancedSearch(titleParam, authorParam, isbnParam,
+                                                          publisherParam, statusParam, fromYear, toYear);
+            model.addAttribute("books", books);
+        }
+
+        // Add search parameters back to the model for form retention
+        model.addAttribute("title", title);
+        model.addAttribute("author", author);
+        model.addAttribute("isbn", isbn);
+        model.addAttribute("publisher", publisher);
+        model.addAttribute("status", status);
+        model.addAttribute("fromYear", fromYear);
+        model.addAttribute("toYear", toYear);
+        model.addAttribute("bookStatuses", BookStatus.values());
+
+        return "advanced-search";
     }
 }

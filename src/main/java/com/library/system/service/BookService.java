@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 
@@ -65,5 +66,14 @@ public class BookService {
     public boolean isBookAvailable(Long bookId) {
         Optional<Book> book = bookRepository.findById(bookId);
         return book.isPresent() && book.get().getStatus() == BookStatus.AVAILABLE;
+    }
+
+    public List<Book> advancedSearch(String title, String author, String isbn, String publisher,
+                                      BookStatus status, Integer fromYear, Integer toYear) {
+        // Convert years to LocalDate for date range comparison
+        LocalDate fromDate = (fromYear != null) ? LocalDate.of(fromYear, 1, 1) : null;
+        LocalDate toDate = (toYear != null) ? LocalDate.of(toYear, 12, 31) : null;
+
+        return bookRepository.advancedSearch(title, author, isbn, publisher, status, fromDate, toDate);
     }
 }
