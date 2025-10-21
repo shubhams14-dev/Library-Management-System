@@ -28,6 +28,9 @@ class LoanServiceTest {
     @Mock
     private UserService userService;
 
+    @Mock
+    private ReservationService reservationService;
+
     @InjectMocks
     private LoanService loanService;
 
@@ -142,6 +145,7 @@ class LoanServiceTest {
         when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
         when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
         when(bookService.saveBook(any(Book.class))).thenReturn(testBook);
+        when(reservationService.hasActiveReservations(testBook)).thenReturn(false);
 
         // When
         Loan result = loanService.returnBook(1L);
@@ -152,6 +156,8 @@ class LoanServiceTest {
         assertNotNull(result.getReturnDate());
         verify(loanRepository).save(any(Loan.class));
         verify(bookService).saveBook(any(Book.class));
+        verify(reservationService).hasActiveReservations(testBook);
+        verify(reservationService, never()).promoteQueue(any());
     }
 
     @Test
@@ -178,6 +184,7 @@ class LoanServiceTest {
         // Given
         when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
         when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+        when(reservationService.hasActiveReservations(testBook)).thenReturn(false);
 
         // When
         Loan result = loanService.extendLoan(1L);
@@ -187,6 +194,7 @@ class LoanServiceTest {
         assertEquals(LoanStatus.EXTENDED, result.getStatus());
         assertTrue(result.getDueDate().isAfter(LocalDate.now().plusDays(14)));
         verify(loanRepository).save(any(Loan.class));
+        verify(reservationService).hasActiveReservations(testBook);
     }
 
     @Test
@@ -216,5 +224,76 @@ class LoanServiceTest {
 
         // When & Then
         assertThrows(RuntimeException.class, () -> loanService.extendLoan(1L));
+    }
+
+    @Test
+    void extendLoan_FailsWhenBookHasReservations() {
+        // Given
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
+        when(reservationService.hasActiveReservations(testBook)).thenReturn(true);
+
+        // When & Then
+        RuntimeException exception = assertThrows(RuntimeException.class,
+            () -> loanService.extendLoan(1L));
+
+        assertEquals("Cannot extend loan - book has active reservations", exception.getMessage());
+        verify(reservationService).hasActiveReservations(testBook);
+        verify(loanRepository, never()).save(any());
+    }
+
+    @Test
+    void returnBook_WithReservations_PromotesQueue() {
+        // Given
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
+        when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+        when(bookService.saveBook(any(Book.class))).thenReturn(testBook);
+        when(reservationService.hasActiveReservations(testBook)).thenReturn(true);
+
+        // When
+        Loan result = loanService.returnBook(1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(LoanStatus.RETURNED, result.getStatus());
+        verify(reservationService).hasActiveReservations(testBook);
+        verify(reservationService).promoteQueue(testBook);
+        verify(bookService).saveBook(any(Book.class));
+    }
+
+    @Test
+    void returnBook_ExtendedLoan_Success() {
+        // Given
+        testLoan.setStatus(LoanStatus.EXTENDED);
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
+        when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+        when(bookService.saveBook(any(Book.class))).thenReturn(testBook);
+        when(reservationService.hasActiveReservations(testBook)).thenReturn(false);
+
+        // When
+        Loan result = loanService.returnBook(1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(LoanStatus.RETURNED, result.getStatus());
+        assertNotNull(result.getReturnDate());
+        verify(loanRepository).save(any(Loan.class));
+    }
+
+    @Test
+    void extendLoan_ExtendedStatus_Success() {
+        // Given
+        testLoan.setStatus(LoanStatus.EXTENDED);
+        when(loanRepository.findById(1L)).thenReturn(Optional.of(testLoan));
+        when(loanRepository.save(any(Loan.class))).thenReturn(testLoan);
+        when(reservationService.hasActiveReservations(testBook)).thenReturn(false);
+
+        // When
+        Loan result = loanService.extendLoan(1L);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(LoanStatus.EXTENDED, result.getStatus());
+        verify(reservationService).hasActiveReservations(testBook);
+        verify(loanRepository).save(any(Loan.class));
     }
 }
