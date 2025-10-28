@@ -25,37 +25,105 @@ public class HomeController {
     private UserService userService;
     
     @GetMapping("/")
-    public String home(@RequestParam(required = false) String search, Model model) {
+    public String home(@RequestParam(required = false) String search,
+                       @RequestParam(required = false) String author,
+                       @RequestParam(required = false) String publisher,
+                       @RequestParam(required = false) String status,
+                       @RequestParam(required = false) Integer fromYear,
+                       @RequestParam(required = false) Integer toYear,
+                       Model model) {
         // Get current user if authenticated
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
             userService.getUserByUsername(authentication.getName()).ifPresent(user -> model.addAttribute("user", user));
         }
 
+        // Check if any refinement filters are applied
+        boolean hasRefinement = (author != null && !author.trim().isEmpty()) ||
+                                (publisher != null && !publisher.trim().isEmpty()) ||
+                                (status != null && !status.trim().isEmpty()) ||
+                                fromYear != null || toYear != null;
+
         // Only search and display books if a search term is provided
         if (search != null && !search.trim().isEmpty()) {
-            List<Book> books = bookService.searchBooks(search);
+            List<Book> books;
+
+            if (hasRefinement) {
+                // Use advanced search with refinement filters
+                String authorParam = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
+                String publisherParam = (publisher != null && !publisher.trim().isEmpty()) ? publisher.trim() : null;
+                BookStatus statusParam = (status != null && !status.trim().isEmpty()) ? BookStatus.valueOf(status) : null;
+
+                // Use the search term as title for advanced search
+                books = bookService.advancedSearch(search.trim(), authorParam, null, publisherParam, statusParam, fromYear, toYear);
+            } else {
+                // Use basic search
+                books = bookService.searchBooks(search);
+            }
+
             model.addAttribute("books", books);
             model.addAttribute("searchTerm", search);
         }
+
+        // Add refinement parameters back to the model for form retention
+        model.addAttribute("author", author);
+        model.addAttribute("publisher", publisher);
+        model.addAttribute("status", status);
+        model.addAttribute("fromYear", fromYear);
+        model.addAttribute("toYear", toYear);
+        model.addAttribute("bookStatuses", BookStatus.values());
 
         return "index";
     }
     
     @GetMapping("/search")
-    public String search(@RequestParam(required = false) String q, Model model) {
+    public String search(@RequestParam(required = false) String q,
+                         @RequestParam(required = false) String author,
+                         @RequestParam(required = false) String publisher,
+                         @RequestParam(required = false) String status,
+                         @RequestParam(required = false) Integer fromYear,
+                         @RequestParam(required = false) Integer toYear,
+                         Model model) {
         // Get current user if authenticated
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && !authentication.getName().equals("anonymousUser")) {
             userService.getUserByUsername(authentication.getName()).ifPresent(user -> model.addAttribute("user", user));
         }
 
+        // Check if any refinement filters are applied
+        boolean hasRefinement = (author != null && !author.trim().isEmpty()) ||
+                                (publisher != null && !publisher.trim().isEmpty()) ||
+                                (status != null && !status.trim().isEmpty()) ||
+                                fromYear != null || toYear != null;
+
         // Only search and display books if a search term is provided
         if (q != null && !q.trim().isEmpty()) {
-            List<Book> books = bookService.searchBooks(q);
+            List<Book> books;
+
+            if (hasRefinement) {
+                // Use advanced search with refinement filters
+                String authorParam = (author != null && !author.trim().isEmpty()) ? author.trim() : null;
+                String publisherParam = (publisher != null && !publisher.trim().isEmpty()) ? publisher.trim() : null;
+                BookStatus statusParam = (status != null && !status.trim().isEmpty()) ? BookStatus.valueOf(status) : null;
+
+                // Use the search term as title for advanced search
+                books = bookService.advancedSearch(q.trim(), authorParam, null, publisherParam, statusParam, fromYear, toYear);
+            } else {
+                // Use basic search
+                books = bookService.searchBooks(q);
+            }
+
             model.addAttribute("books", books);
             model.addAttribute("searchTerm", q);
         }
+
+        // Add refinement parameters back to the model for form retention
+        model.addAttribute("author", author);
+        model.addAttribute("publisher", publisher);
+        model.addAttribute("status", status);
+        model.addAttribute("fromYear", fromYear);
+        model.addAttribute("toYear", toYear);
+        model.addAttribute("bookStatuses", BookStatus.values());
 
         return "search";
     }

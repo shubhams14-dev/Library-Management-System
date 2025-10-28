@@ -124,48 +124,117 @@
 
         <!-- Books Section -->
         <div th:if="${searchTerm != null}">
-            <div class="row">
+            <div class="row mb-3">
                 <div class="col-12">
-                    <h2 class="mb-4">
+                    <h2>
                         <i class="fas fa-books"></i>
                         Search Results for "<span th:text="${searchTerm}"></span>"
                     </h2>
                 </div>
             </div>
 
-            <div class="row" th:if="${books != null and !books.empty}">
-                <div class="col-md-6 col-lg-4 mb-4" th:each="book : ${books}">
-                    <div class="card book-card h-100">
-                        <div class="card-body position-relative">
-                            <span class="badge book-status"
-                                  th:classappend="${book.status.name() == 'AVAILABLE'} ? 'bg-success' : 'bg-warning'"
-                                  th:text="${book.status.name()}"></span>
+            <div class="row">
+                <!-- Refine Search Sidebar -->
+                <div class="col-lg-3 mb-4">
+                    <div class="card bg-lightgolden">
+                        <div class="card-header bg-brown text-white">
+                            <h5 class="mb-0"><i class="fas fa-filter"></i> Refine Your Search</h5>
+                        </div>
+                        <div class="card-body">
+                            <form action="/" method="get">
+                                <!-- Hidden field to preserve the original search term -->
+                                <input type="hidden" name="search" th:value="${searchTerm}">
 
-                            <h5 class="card-title" th:text="${book.title}">Book Title</h5>
-                            <p class="card-text">
-                                <strong>Author:</strong> <span th:text="${book.author}">Author Name</span><br>
-                                <strong>ISBN:</strong> <span th:text="${book.isbn}">ISBN</span><br>
-                                <span th:if="${book.publisher}">
-                                    <strong>Publisher:</strong> <span th:text="${book.publisher}">Publisher</span><br>
-                                </span>
-                            </p>
+                                <!-- Author Filter -->
+                                <div class="mb-3">
+                                    <label for="author" class="form-label">Author</label>
+                                    <input type="text" class="form-control" id="author" name="author"
+                                           th:value="${author}" placeholder="Filter by author">
+                                </div>
 
-                            <div class="mt-auto">
-                                <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-primary">
-                                    <i class="fas fa-eye"></i> View Details
-                                </a>
-                            </div>
+                                <!-- Publisher Filter -->
+                                <div class="mb-3">
+                                    <label for="publisher" class="form-label">Publisher</label>
+                                    <input type="text" class="form-control" id="publisher" name="publisher"
+                                           th:value="${publisher}" placeholder="Filter by publisher">
+                                </div>
+
+                                <!-- Status Filter -->
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Status</label>
+                                    <select class="form-select" id="status" name="status">
+                                        <option value="">All Statuses</option>
+                                        <option th:each="bookStatus : ${bookStatuses}"
+                                                th:value="${bookStatus.name()}"
+                                                th:text="${bookStatus.name()}"
+                                                th:selected="${status != null and status == bookStatus.name()}">Status</option>
+                                    </select>
+                                </div>
+
+                                <!-- Publication Year Range -->
+                                <div class="mb-3">
+                                    <label class="form-label">Publication Year</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="number" class="form-control" name="fromYear"
+                                                   th:value="${fromYear}" placeholder="From" min="1800" max="2100">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" class="form-control" name="toYear"
+                                                   th:value="${toYear}" placeholder="To" min="1800" max="2100">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Action Buttons -->
+                                <div class="d-grid gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-search"></i> Apply Filters
+                                    </button>
+                                    <a th:href="@{/(search=${searchTerm})}" class="btn btn-outline-secondary">
+                                        <i class="fas fa-undo"></i> Clear Filters
+                                    </a>
+                                </div>
+                            </form>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="row" th:if="${books == null or books.empty}">
-                <div class="col-12">
-                    <div class="alert alert-info text-center">
-                        <i class="fas fa-info-circle fa-2x mb-3"></i>
-                        <h4>No books found</h4>
-                        <p>No books match your search criteria. Try different keywords.</p>
+                <!-- Search Results -->
+                <div class="col-lg-9">
+                    <div class="row" th:if="${books != null and !books.empty}">
+                        <div class="col-md-6 col-lg-4 mb-4" th:each="book : ${books}">
+                            <div class="card book-card h-100">
+                                <div class="card-body position-relative">
+                                    <span class="badge book-status"
+                                          th:classappend="${book.status.name() == 'AVAILABLE'} ? 'bg-success' : 'bg-warning'"
+                                          th:text="${book.status.name()}"></span>
+
+                                    <h5 class="card-title" th:text="${book.title}">Book Title</h5>
+                                    <p class="card-text">
+                                        <strong>Author:</strong> <span th:text="${book.author}">Author Name</span><br>
+                                        <strong>ISBN:</strong> <span th:text="${book.isbn}">ISBN</span><br>
+                                        <span th:if="${book.publisher}">
+                                            <strong>Publisher:</strong> <span th:text="${book.publisher}">Publisher</span><br>
+                                        </span>
+                                    </p>
+
+                                    <div class="mt-auto">
+                                        <a th:href="@{/books/{id}(id=${book.id})}" class="btn btn-primary">
+                                            <i class="fas fa-eye"></i> View Details
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div th:if="${books == null or books.empty}">
+                        <div class="alert alert-info text-center">
+                            <i class="fas fa-info-circle fa-2x mb-3"></i>
+                            <h4>No books found</h4>
+                            <p>No books match your search criteria. Try different keywords or filters.</p>
+                        </div>
                     </div>
                 </div>
             </div>
