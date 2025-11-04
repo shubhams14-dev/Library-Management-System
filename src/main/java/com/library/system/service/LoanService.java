@@ -113,6 +113,7 @@ public class LoanService {
         loan.setReturnDate(LocalDate.now());
         loan.setStatus(LoanStatus.RETURNED);
         loan.setUpdatedAt(java.time.LocalDateTime.now());
+        loan.setReminderSentAt(null);
         loan = loanRepository.save(loan);
 
         // Update book status and handle reservations
@@ -158,6 +159,7 @@ public class LoanService {
         loan.setDueDate(newDueDate);
         loan.setStatus(LoanStatus.EXTENDED);
         loan.setUpdatedAt(java.time.LocalDateTime.now());
+        loan.setReminderSentAt(null);
 
         return loanRepository.save(loan);
     }

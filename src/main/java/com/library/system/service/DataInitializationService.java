@@ -1,11 +1,17 @@
 package com.library.system.service;
 
-import com.library.system.domain.*;
+import com.library.system.domain.Book;
+import com.library.system.domain.BookStatus;
+import com.library.system.domain.Loan;
+import com.library.system.domain.LoanStatus;
+import com.library.system.domain.User;
+import com.library.system.repository.LoanRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,11 +23,15 @@ public class DataInitializationService implements CommandLineRunner {
     
     @Autowired
     private BookService bookService;
+
+    @Autowired
+    private LoanRepository loanRepository;
     
     @Override
     public void run(String... args) throws Exception {
         initializeUsers();
         initializeBooks();
+        initializeSampleLoan();
     }
     
     private void initializeUsers() {
@@ -86,5 +96,36 @@ public class DataInitializationService implements CommandLineRunner {
                 bookService.saveBook(book);
             }
         }
+    }
+
+    private void initializeSampleLoan() {
+        userService.getUserByUsername("john.doe").ifPresent(user -> {
+            bookService.getBookByIsbn("978-0134685991").ifPresent(book -> {
+                LocalDate targetDueDate = LocalDate.now().plusDays(1);
+
+                Loan loan = loanRepository.findByUserAndBookAndStatus(user, book, LoanStatus.ACTIVE)
+                    .orElseGet(() -> loanRepository.findByUserAndBookAndStatus(user, book, LoanStatus.EXTENDED)
+                        .orElse(null));
+
+                if (loan == null) {
+                    Loan newLoan = new Loan(user, book, LocalDate.now(), targetDueDate);
+                    newLoan.setStatus(LoanStatus.ACTIVE);
+                    newLoan.setReminderSentAt(null);
+                    loanRepository.save(newLoan);
+
+                    book.setStatus(BookStatus.BORROWED);
+                    bookService.saveBook(book);
+                } else {
+                    loan.setDueDate(targetDueDate);
+                    loan.setStatus(LoanStatus.ACTIVE);
+                    loan.setReminderSentAt(null);
+                    loan.setUpdatedAt(LocalDateTime.now());
+                    loanRepository.save(loan);
+
+                    book.setStatus(BookStatus.BORROWED);
+                    bookService.saveBook(book);
+                }
+            });
+        });
     }
 }

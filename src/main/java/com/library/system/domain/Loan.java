@@ -38,6 +38,9 @@ public class Loan {
     private LocalDateTime createdAt;
     
     private LocalDateTime updatedAt;
+
+    @Column(name = "reminder_sent_at")
+    private LocalDateTime reminderSentAt;
     
     // Constructors
     public Loan() {}
@@ -49,6 +52,7 @@ public class Loan {
         this.dueDate = dueDate;
         this.createdAt = LocalDateTime.now();
         this.updatedAt = LocalDateTime.now();
+        this.reminderSentAt = null;
     }
     
     // Getters and Setters
@@ -122,5 +126,13 @@ public class Loan {
     
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public LocalDateTime getReminderSentAt() {
+        return reminderSentAt;
+    }
+
+    public void setReminderSentAt(LocalDateTime reminderSentAt) {
+        this.reminderSentAt = reminderSentAt;
     }
 }

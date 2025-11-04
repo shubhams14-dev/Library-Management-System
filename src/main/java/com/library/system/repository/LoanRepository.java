@@ -36,4 +36,16 @@ public interface LoanRepository extends JpaRepository<Loan, Long> {
 
     @Query("SELECT l FROM Loan l JOIN FETCH l.book WHERE l.user = :user AND l.status = :status")
     List<Loan> findByUserAndStatusFetchBook(@Param("user") User user, @Param("status") LoanStatus status);
+
+    @Query("""
+        SELECT l FROM Loan l
+        JOIN FETCH l.user
+        JOIN FETCH l.book
+        WHERE l.status IN :statuses
+          AND l.reminderSentAt IS NULL
+          AND l.dueDate BETWEEN :startDate AND :endDate
+    """)
+    List<Loan> findDueSoonLoansWithoutReminder(@Param("startDate") LocalDate startDate,
+                                               @Param("endDate") LocalDate endDate,
+                                               @Param("statuses") List<LoanStatus> statuses);
 }
